@@ -1,7 +1,5 @@
 # Idk bro
 
-***
-
 ## Building from source
 **Requirements**
 - Zig 0.16+ _duh_
