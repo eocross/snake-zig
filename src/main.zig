@@ -15,10 +15,10 @@ const rl = @import("raylib");
 
 const Vector2 = rl.Vector2;
 
-const TARGET_FPS = 60;
 const SCREEN_WIDTH = 600;
-const SCREEN_HEIGHT = 500;
+const SCREEN_HEIGHT = 600;
 const SQUARE_LENGTH = 20;
+const TICKSPEED = 10;
 
 const Snake = struct {
     head: Vector2,
@@ -50,13 +50,13 @@ const Snake = struct {
     }
 
     fn checkInput(self: *Snake) void {
-        if (rl.isKeyPressed(.w)) {
+        if (rl.isKeyPressed(.w) and self.direction != .down) {
             self.direction = .up;
-        } else if (rl.isKeyPressed(.s)) {
+        } else if (rl.isKeyPressed(.s) and self.direction != .up) {
             self.direction = .down;
-        } else if (rl.isKeyPressed(.a)) {
+        } else if (rl.isKeyPressed(.a) and self.direction != .right) {
             self.direction = .left;
-        } else if (rl.isKeyPressed(.d)) {
+        } else if (rl.isKeyPressed(.d) and self.direction != .left) {
             self.direction = .right;
         }
     }
@@ -119,6 +119,7 @@ fn lose(io: std.Io) noreturn {
     std.Io.File.stdout().writeStreamingAll(io, "You lose!\n") catch {};
     std.process.exit(0);
 }
+
 pub fn main(init: std.process.Init) !void {
 
     // INIT RANDOM (FOR APPLE GENERATION)
@@ -130,29 +131,20 @@ pub fn main(init: std.process.Init) !void {
     // INIT WINDOW
     rl.initWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "snake game - zig");
     defer rl.closeWindow();
-    rl.setTargetFPS(TARGET_FPS);
+    rl.setTargetFPS(TICKSPEED);
 
     // INIT PLAYER
     var player = try Snake.init(init.arena);
     defer player.deinit();
     try player.addBody();
     player.move();
-    var tick: i8 = 0;
 
     while (!rl.windowShouldClose()) {
 
-        // CHECK INPUT
+        // CHECK INPUT AND MOVE
         player.checkInput();
-
-        // TICK
-        tick += 1;
-        if (tick >= 30) {
-            player.move();
-            tick = 0;
-            if (player.collisionCheck(player.head) or player.borderCheck()) {
-                lose(init.io);
-            }
-        }
+        player.move();
+        if (player.collisionCheck(player.head) or player.borderCheck()) lose(init.io);
 
         // CHECK APPLE
         if (eqlVec2(apple, player.head)) {
